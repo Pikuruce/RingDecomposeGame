@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 
 void main() {
@@ -54,12 +56,7 @@ class SplitScreen extends StatelessWidget {
             flex: 1,
             child: Container(
               color: Colors.green[100],
-              child: Column(
-                children: [
-                  Expanded(child: Container(color: Colors.green[200])),
-                  Expanded(child: Container(color: Colors.green[300])),
-                ],
-              ),
+              child: Center(child: Text("右側のUIエリア")),
             ),
           ),
         ],
@@ -68,12 +65,94 @@ class SplitScreen extends StatelessWidget {
   }
 }
 
-class SplitGameScreen extends StatelessWidget {
+class SplitGameScreen extends StatefulWidget {
+  const SplitGameScreen({super.key});
+
+  @override
+  State<SplitGameScreen> createState() => _SplitGameScreenState();
+}
+
+class _SplitGameScreenState extends State<SplitGameScreen> {
+  final List<int> _flexValues = [2, 1];
+  double _borderY = 200;
+
+  void _updateNewFlexValues(BoxConstraints constraints) {
+    setState(() {
+      _flexValues[0] = _borderY.toInt();
+      _flexValues[1] = (constraints.maxHeight - _borderY).toInt();
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    // 初期のflex値を設定
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final constraints =
+          context.findRenderObject()!.constraints as BoxConstraints;
+      _updateNewFlexValues(constraints);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: Colors.blue[200],
-      child: const Center(child: Text("ゲームエリア")),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return Stack(
+          children: [
+            // 画面を上下に分割するためのColumn
+            Column(
+              children: [
+                Expanded(
+                  flex: _flexValues[0],
+                  child: Container(color: Colors.blue[200]),
+                ),
+                Expanded(
+                  flex: _flexValues[1],
+                  child: Container(color: Colors.blue[300]),
+                ),
+              ],
+            ),
+            // ドラッグ可能な境界線
+            Positioned(
+              top: min(
+                constraints.maxHeight,
+                max(
+                  0,
+                  constraints.maxHeight *
+                          _flexValues[0] /
+                          (_flexValues[0] + _flexValues[1]) -
+                      2.5,
+                ),
+              ),
+              left: 0,
+              right: 0,
+              child: GestureDetector(
+                onTapDown: (details) {
+                  setState(() {
+                    _borderY = min(
+                      constraints.maxHeight,
+                      max(
+                        0,
+                        constraints.maxHeight *
+                            _flexValues[0] /
+                            (_flexValues[0] + _flexValues[1]),
+                      ),
+                    );
+                  });
+                },
+                onPanUpdate: (details) {
+                  setState(() {
+                    _borderY += details.delta.dy;
+                    _updateNewFlexValues(constraints);
+                  });
+                },
+                child: Container(height: 5, color: Colors.red),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }
