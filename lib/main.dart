@@ -1,5 +1,9 @@
 import 'dart:math';
 
+import 'package:blindring/src/leftPageFoot.dart';
+import 'package:blindring/src/leftPageHead.dart';
+import 'package:blindring/src/rightPage.dart';
+import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 
 void main() {
@@ -37,8 +41,25 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class SplitScreen extends StatelessWidget {
+class SplitScreen extends StatefulWidget {
   const SplitScreen({super.key});
+
+  @override
+  State<SplitScreen> createState() => SplitScreenState();
+}
+
+class SplitScreenState extends State<SplitScreen> {
+  GameScreen game = GameScreen();
+
+  void reloadGame() {
+    game = GameScreen();
+    game.onLoad();
+    setState(() {});
+  }
+
+  void reload() {
+    setState(() {});
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -49,14 +70,17 @@ class SplitScreen extends StatelessWidget {
           // 左部：画面の2/3
           Expanded(
             flex: 3,
-            child: Container(color: Colors.blue[100], child: SplitGameScreen()),
+            child: Container(
+              color: Colors.blue[100],
+              child: SplitGameScreen(game: game),
+            ),
           ),
           // 右部：画面の1/3
           Expanded(
             flex: 1,
             child: Container(
               color: Colors.green[100],
-              child: Center(child: Text("右側のUIエリア")),
+              child: Center(child: AnswerController(game: game)),
             ),
           ),
         ],
@@ -66,7 +90,8 @@ class SplitScreen extends StatelessWidget {
 }
 
 class SplitGameScreen extends StatefulWidget {
-  const SplitGameScreen({super.key});
+  GameScreen game;
+  SplitGameScreen({super.key, required this.game});
 
   @override
   State<SplitGameScreen> createState() => _SplitGameScreenState();
@@ -74,7 +99,7 @@ class SplitGameScreen extends StatefulWidget {
 
 class _SplitGameScreenState extends State<SplitGameScreen> {
   final List<int> _flexValues = [2, 1];
-  double _borderY = 200;
+  double _borderY = 800;
 
   void _updateNewFlexValues(BoxConstraints constraints) {
     setState(() {
@@ -105,11 +130,11 @@ class _SplitGameScreenState extends State<SplitGameScreen> {
               children: [
                 Expanded(
                   flex: _flexValues[0],
-                  child: Container(color: Colors.blue[200]),
+                  child: GameWidget(game: widget.game),
                 ),
                 Expanded(
                   flex: _flexValues[1],
-                  child: Container(color: Colors.blue[300]),
+                  child: AnswerUi(game: widget.game),
                 ),
               ],
             ),
@@ -147,7 +172,10 @@ class _SplitGameScreenState extends State<SplitGameScreen> {
                     _updateNewFlexValues(constraints);
                   });
                 },
-                child: Container(height: 5, color: Colors.red),
+                child: Container(
+                  height: 5,
+                  color: const Color.fromARGB(255, 54, 98, 244),
+                ),
               ),
             ),
           ],
