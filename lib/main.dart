@@ -53,7 +53,6 @@ class SplitScreenState extends State<SplitScreen> {
 
   void reloadGame() {
     game = GameScreen();
-    game.onLoad();
     setState(() {});
   }
 
@@ -99,7 +98,7 @@ class SplitGameScreen extends StatefulWidget {
 
 class _SplitGameScreenState extends State<SplitGameScreen> {
   final List<int> _flexValues = [2, 1];
-  double _borderY = 800;
+  double _borderY = 500;
 
   void _updateNewFlexValues(BoxConstraints constraints) {
     setState(() {

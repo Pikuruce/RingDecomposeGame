@@ -19,28 +19,61 @@ class _AnswerControllerState extends State<AnswerController> {
         child: Center(
           child: Column(
             children: [
-              Slider(
-                value: widget
-                    .game
-                    .ring
-                    .answerList[widget.game.indexPointer]
-                    .period
-                    .toDouble(),
-                min: 1,
-                max: 20,
-                onChanged: (value) {
-                  setState(() {
-                    widget.game.ring.reDefine(
-                      widget.game.indexPointer,
-                      value,
-                      widget
-                          .game
-                          .ring
-                          .radiusList[widget.game.indexPointer]
-                          .length,
-                    );
-                  });
-                },
+              GameSlider(
+                slider: Slider(
+                  value: widget
+                      .game
+                      .ring
+                      .answerList[widget.game.indexPointer]
+                      .period,
+                  min: 1,
+                  max: 20,
+                  onChanged: (value) {
+                    setState(() {
+                      widget.game.ring.reDefine(
+                        widget.game.indexPointer,
+                        value.round().toDouble(),
+                        widget
+                            .game
+                            .ring
+                            .answerList[widget.game.indexPointer]
+                            .length,
+                      );
+                      context
+                          .findAncestorStateOfType<SplitScreenState>()
+                          ?.reload();
+                    });
+                  },
+                ),
+                itemName: "周期",
+              ),
+              GameSlider(
+                slider: Slider(
+                  value: widget
+                      .game
+                      .ring
+                      .answerList[widget.game.indexPointer]
+                      .length,
+                  min: 0,
+                  max: 100,
+                  onChanged: (value) {
+                    setState(() {
+                      widget.game.ring.reDefine(
+                        widget.game.indexPointer,
+                        widget
+                            .game
+                            .ring
+                            .answerList[widget.game.indexPointer]
+                            .period,
+                        value.round().toDouble(),
+                      );
+                      context
+                          .findAncestorStateOfType<SplitScreenState>()
+                          ?.reload();
+                    });
+                  },
+                ),
+                itemName: "振幅",
               ),
             ],
           ),
@@ -52,11 +85,35 @@ class _AnswerControllerState extends State<AnswerController> {
       child: Center(
         child: ElevatedButton(
           onPressed: () {
-            context.findAncestorStateOfType<SplitScreenState>()?.reloadGame();
+            context.findAncestorStateOfType<SplitScreenState>()?.reload();
           },
           child: Text("Load"),
         ),
       ),
+    );
+  }
+}
+
+class GameSlider extends StatefulWidget {
+  final Slider slider;
+  final String itemName;
+  const GameSlider({super.key, required this.slider, required this.itemName});
+
+  @override
+  State<GameSlider> createState() => _GameSliderState();
+}
+
+class _GameSliderState extends State<GameSlider> {
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        widget.slider,
+        Text(
+          "${widget.itemName}: ${widget.slider.value}",
+          style: TextStyle(color: Colors.white),
+        ),
+      ],
     );
   }
 }
