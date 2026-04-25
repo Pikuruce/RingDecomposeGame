@@ -3,19 +3,19 @@ import 'dart:math';
 import 'package:flame/components.dart';
 import 'package:flame/extensions.dart';
 import 'package:flame/game.dart';
-import 'package:flutter/rendering.dart';
+import 'package:flutter/material.dart';
 
 class Radius {
-  double period;
-  double length;
+  int period;
+  int length;
   Radius(this.period, this.length);
 
   Vector2 getValue(double time, double start) {
     double t = (time - start) / period * pi * 2;
-    return Vector2(cos(t), sin(t)) * length;
+    return Vector2(cos(t), sin(t)) * length.toDouble();
   }
 
-  void reDefine(double period, double length) {
+  void reDefine(int period, int length) {
     this.period = period;
     this.length = length;
   }
@@ -26,11 +26,11 @@ class BlindRing {
   List<Radius> answerList = [];
   BlindRing();
 
-  void addRadius(double period, double length) {
+  void addRadius(int period, int length) {
     radiusList.add(Radius(period, length));
   }
 
-  void addAnswer(double period, double length) {
+  void addAnswer(int period, int length) {
     answerList.add(Radius(period, length));
   }
 
@@ -50,7 +50,7 @@ class BlindRing {
     return result;
   }
 
-  void reDefine(int index, double period, double length) {
+  void reDefine(int index, int period, int length) {
     if (index < answerList.length) {
       answerList[index].reDefine(period, length);
     }
@@ -59,7 +59,15 @@ class BlindRing {
   double radiusLcm() {
     double lcmValue = 1;
     for (var radius in radiusList) {
-      lcmValue = lcm(lcmValue, radius.period);
+      lcmValue = lcm(lcmValue, radius.period.round().toDouble());
+    }
+    return lcmValue;
+  }
+
+  double answerLcm() {
+    double lcmValue = 1;
+    for (var answer in answerList) {
+      lcmValue = lcm(lcmValue, answer.period.round().toDouble());
     }
     return lcmValue;
   }
@@ -105,13 +113,20 @@ class TrailComponent extends Component {
   }
 
   void ahead(BlindRing ring) {
-    for (double t = 0; t < ring.radiusLcm() + 0.1; t += 0.1) {
-      addPoint(ring.getValue(t, 0));
+    for (
+      double t = 0;
+      t < ring.lcm(ring.radiusLcm(), ring.answerLcm()) + 0.1;
+      t += 0.1
+    ) {
+      addPoint(ring.getValue(t, 0) - ring.getAnswer(t, 0));
     }
   }
 }
 
 class GameScreen extends FlameGame {
+  final int maxPeriod = 20;
+  final int maxLength = 100;
+  final int level;
   double t = 0;
   int indexPointer = 0;
   BlindRing ring = BlindRing();
@@ -121,8 +136,29 @@ class GameScreen extends FlameGame {
     anchor: Anchor.center,
     paint: Paint()..color = const Color(0xFFFF0000),
   );
+  bool aheading = true;
 
   bool isLoad = false;
+
+  void reAhead() {
+    if (aheading) {
+      trail.clear();
+      trail.ahead(ring);
+    }
+  }
+
+  void modeSwitch() {
+    if (aheading) {
+      trail.clear();
+    } else {
+      trail.clear();
+      trail.ahead(ring);
+    }
+
+    aheading = !aheading;
+  }
+
+  GameScreen({required this.level});
 
   @override
   Future<void> onLoad() async {
@@ -133,13 +169,14 @@ class GameScreen extends FlameGame {
     world.add(trail);
     debugMode = true;
     Random random = Random();
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < level; i++) {
       ring.addRadius(
-        random.nextIntBetween(4, 12).toDouble(),
-        random.nextIntBetween(10, 70).toDouble(),
+        random.nextIntBetween(1, 20),
+        random.nextIntBetween(1, 100),
       );
       ring.addAnswer(1, 0);
     }
+    trail.clear();
     trail.ahead(ring);
     isLoad = true;
   }
@@ -149,8 +186,8 @@ class GameScreen extends FlameGame {
     super.update(dt);
 
     t += dt;
-    Vector2 value = ring.getValue(t, 0);
+    Vector2 value = ring.getValue(t, 0) - ring.getAnswer(t, 0);
     pointer.position = value;
-    //trail.addPoint(value);
+    if (!aheading) trail.addPoint(value);
   }
 }

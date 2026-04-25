@@ -49,10 +49,10 @@ class SplitScreen extends StatefulWidget {
 }
 
 class SplitScreenState extends State<SplitScreen> {
-  GameScreen game = GameScreen();
+  GameScreen game = GameScreen(level: 3);
 
-  void reloadGame() {
-    game = GameScreen();
+  void reloadGame(int level) {
+    game = GameScreen(level: level);
     setState(() {});
   }
 
@@ -62,35 +62,60 @@ class SplitScreenState extends State<SplitScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      //appBar: AppBar(title: const Text("画面分割サンプル")),
-      body: Row(
-        children: [
-          // 左部：画面の2/3
-          Expanded(
-            flex: 3,
-            child: Container(
-              color: Colors.blue[100],
-              child: SplitGameScreen(game: game),
-            ),
-          ),
-          // 右部：画面の1/3
-          Expanded(
-            flex: 1,
-            child: Container(
-              color: Colors.green[100],
-              child: Center(child: AnswerController(game: game)),
-            ),
-          ),
-        ],
-      ),
+    return FutureBuilder(
+      future: game.loaded,
+      builder: (context, snapchot) {
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            return Scaffold(
+              //appBar: AppBar(title: const Text("画面分割サンプル")),
+              backgroundColor: Colors.black,
+              body: Row(
+                children: [
+                  // 左部：画面の2/3
+                  Expanded(
+                    flex: 3,
+                    child: Container(
+                      color: Colors.blue[100],
+                      child: SplitGameScreen(game: game),
+                    ),
+                  ),
+                  // 右部：画面の1/3
+                  Expanded(
+                    flex: 1,
+                    child: Stack(
+                      children: [
+                        Container(
+                          color: Colors.green[100],
+                          child: Center(child: AnswerController(game: game)),
+                        ),
+                        Positioned(
+                          top: 0,
+                          left: 0,
+                          child: Container(
+                            width: 5,
+                            height: constraints.maxHeight,
+                            decoration: BoxDecoration(
+                              color: const Color.fromARGB(255, 54, 98, 244),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }
 
 class SplitGameScreen extends StatefulWidget {
-  GameScreen game;
-  SplitGameScreen({super.key, required this.game});
+  final GameScreen game;
+  const SplitGameScreen({super.key, required this.game});
 
   @override
   State<SplitGameScreen> createState() => _SplitGameScreenState();
@@ -98,7 +123,7 @@ class SplitGameScreen extends StatefulWidget {
 
 class _SplitGameScreenState extends State<SplitGameScreen> {
   final List<int> _flexValues = [2, 1];
-  double _borderY = 500;
+  double _borderY = 600;
 
   void _updateNewFlexValues(BoxConstraints constraints) {
     setState(() {
