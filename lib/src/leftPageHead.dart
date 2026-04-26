@@ -87,11 +87,15 @@ class BlindRing {
 class TrailComponent extends Component {
   final Path path = Path();
   Vector2? lastPoint;
+  double length = 0.0;
+  final Color customColor;
+
+  TrailComponent({required this.customColor});
 
   @override
   void render(Canvas canvas) {
     final paint = Paint()
-      ..color = const Color(0xFFFFFFFF)
+      ..color = customColor
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2;
 
@@ -102,17 +106,23 @@ class TrailComponent extends Component {
     if (lastPoint == null) {
       path.moveTo(point.x, point.y);
     } else {
+      path.moveTo(lastPoint!.x, lastPoint!.y);
       path.lineTo(point.x, point.y);
+    }
+    if (lastPoint != null) {
+      length += (point - lastPoint!).length;
     }
     lastPoint = point;
   }
 
   void clear() {
     path.reset();
+    length = 0.0;
     lastPoint = null;
   }
 
   void ahead(BlindRing ring) {
+    clear();
     for (
       double t = 0;
       t < ring.lcm(ring.radiusLcm(), ring.answerLcm()) + 0.1;
@@ -124,59 +134,118 @@ class TrailComponent extends Component {
 }
 
 class GameScreen extends FlameGame {
-  final int maxPeriod = 20;
+  late int maxPeriod = 64;
   final int maxLength = 100;
   final int level;
   double t = 0;
   int indexPointer = 0;
   BlindRing ring = BlindRing();
-  TrailComponent trail = TrailComponent();
+  TrailComponent trail = TrailComponent(customColor: Colors.white);
   CircleComponent pointer = CircleComponent(
     radius: 5,
     anchor: Anchor.center,
     paint: Paint()..color = const Color(0xFFFF0000),
   );
+  CircleComponent origin = CircleComponent(
+    radius: 5,
+    position: Vector2.zero(),
+    anchor: Anchor.center,
+    paint: Paint()..color = const Color.fromARGB(255, 0, 38, 255),
+  );
+  List<CircleComponent> nodes = [];
+  TrailComponent nodeTrails = TrailComponent(
+    customColor: Color.fromARGB(199, 60, 199, 0),
+  );
+  TextComponent clearMessage = TextComponent(
+    text: "FALL DOWN",
+    position: Vector2.zero(),
+    size: Vector2.all(1000),
+    anchor: Anchor.center,
+    textRenderer: TextPaint(
+      style: TextStyle(color: Color.fromARGB(255, 67, 67, 67), fontSize: 100),
+    ),
+    priority: -1,
+  );
   bool aheading = true;
+  bool clear = false;
 
   bool isLoad = false;
 
   void reAhead() {
     if (aheading) {
-      trail.clear();
       trail.ahead(ring);
+    }
+  }
+
+  void showAnswers() {
+    nodeTrails.clear();
+    nodeTrails.addPoint(Vector2.zero());
+    Vector2 totalValue = Vector2.zero();
+    int ti = 0;
+    for (int i = 0; i < ring.answerList.length; i++) {
+      if (ring.answerList[i].length > 0) {
+        if (nodes.length < ti + 1) {
+          CircleComponent node = CircleComponent(
+            radius: 2.5,
+            anchor: Anchor.center,
+            paint: Paint()..color = const Color.fromARGB(200, 155, 39, 176),
+          );
+          nodes.add(node);
+          world.add(node);
+        }
+        totalValue += ring.answerList[i].getValue(t, 0);
+        nodeTrails.addPoint(totalValue);
+        nodes[ti].position = totalValue;
+        ti++;
+      }
     }
   }
 
   void modeSwitch() {
     if (aheading) {
       trail.clear();
+      world.add(pointer);
+      world.add(origin);
+      if (clear) {
+        world.add(nodeTrails);
+        for (var node in nodes) {
+          world.add(node);
+        }
+      }
     } else {
-      trail.clear();
+      pointer.removeFromParent();
+      origin.removeFromParent();
       trail.ahead(ring);
+      if (clear) {
+        nodeTrails.removeFromParent();
+        for (var node in nodes) {
+          node.removeFromParent();
+        }
+      }
     }
 
     aheading = !aheading;
   }
 
-  GameScreen({required this.level});
+  GameScreen({required this.level}) {
+    maxPeriod = (1 + (60 / level)).toInt();
+  }
 
   @override
   Future<void> onLoad() async {
     await super.onLoad();
 
     camera.viewfinder.anchor = Anchor.center;
-    world.add(pointer);
     world.add(trail);
-    debugMode = true;
+    //debugMode = true;
     Random random = Random();
     for (int i = 0; i < level; i++) {
       ring.addRadius(
-        random.nextIntBetween(1, 20),
-        random.nextIntBetween(1, 100),
+        random.nextIntBetween(1, maxPeriod + 1),
+        random.nextIntBetween(1, maxLength + 1),
       );
       ring.addAnswer(1, 0);
     }
-    trail.clear();
     trail.ahead(ring);
     isLoad = true;
   }
@@ -186,8 +255,22 @@ class GameScreen extends FlameGame {
     super.update(dt);
 
     t += dt;
-    Vector2 value = ring.getValue(t, 0) - ring.getAnswer(t, 0);
-    pointer.position = value;
-    if (!aheading) trail.addPoint(value);
+    if (!clear && !aheading) {
+      Vector2 value = ring.getValue(t, 0) - ring.getAnswer(t, 0);
+      pointer.position = value;
+      trail.addPoint(value);
+    }
+    if (trail.length < 1e-1 && aheading && !clear) {
+      clear = true;
+      world.add(clearMessage);
+      world.add(nodeTrails);
+    }
+
+    if (clear && !aheading) {
+      showAnswers();
+      Vector2 value = ring.getAnswer(t, 0);
+      pointer.position = value;
+      trail.addPoint(value);
+    }
   }
 }

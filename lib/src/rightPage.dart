@@ -35,21 +35,24 @@ class _AnswerControllerState extends State<AnswerController> {
                         min: 1,
                         max: widget.game.maxPeriod.toDouble(),
                         onChanged: (value) {
-                          setState(() {
-                            widget.game.ring.reDefine(
-                              widget.game.indexPointer,
-                              value.round(),
-                              widget
-                                  .game
-                                  .ring
-                                  .answerList[widget.game.indexPointer]
-                                  .length,
-                            );
-                            widget.game.reAhead();
-                            context
-                                .findAncestorStateOfType<SplitScreenState>()
-                                ?.reload();
-                          });
+                          if (!widget.game.clear) {
+                            setState(() {
+                              widget.game.ring.reDefine(
+                                widget.game.indexPointer,
+                                value.round(),
+                                widget
+                                    .game
+                                    .ring
+                                    .answerList[widget.game.indexPointer]
+                                    .length,
+                              );
+                              widget.game.trail.clear();
+                              widget.game.reAhead();
+                              context
+                                  .findAncestorStateOfType<SplitScreenState>()
+                                  ?.reload();
+                            });
+                          }
                         },
                       ),
                       itemName: "周期",
@@ -68,21 +71,24 @@ class _AnswerControllerState extends State<AnswerController> {
                         min: 0,
                         max: widget.game.maxLength.toDouble(),
                         onChanged: (value) {
-                          setState(() {
-                            widget.game.ring.reDefine(
-                              widget.game.indexPointer,
-                              widget
-                                  .game
-                                  .ring
-                                  .answerList[widget.game.indexPointer]
-                                  .period,
-                              value.round(),
-                            );
-                            widget.game.reAhead();
-                            context
-                                .findAncestorStateOfType<SplitScreenState>()
-                                ?.reload();
-                          });
+                          if (!widget.game.clear) {
+                            setState(() {
+                              widget.game.ring.reDefine(
+                                widget.game.indexPointer,
+                                widget
+                                    .game
+                                    .ring
+                                    .answerList[widget.game.indexPointer]
+                                    .period,
+                                value.round(),
+                              );
+                              widget.game.trail.clear();
+                              widget.game.reAhead();
+                              context
+                                  .findAncestorStateOfType<SplitScreenState>()
+                                  ?.reload();
+                            });
+                          }
                         },
                       ),
                       itemName: "振幅",
