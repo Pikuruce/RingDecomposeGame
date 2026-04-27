@@ -36,7 +36,7 @@ class _AnswerUiState extends State<AnswerUi>
           builder: (context, constraints) {
             return Container(
               width: constraints.maxWidth,
-              height: constraints.maxHeight,
+              height: 200,
               color: const Color.fromARGB(255, 0, 0, 0),
               child: SingleChildScrollView(
                 scrollDirection: Axis.vertical,
@@ -86,6 +86,7 @@ class AnswerBoxState extends State<AnswerBox> {
     return GestureDetector(
       onTap: () {
         widget.game.indexPointer = widget.index;
+        //widget.game.updatePrevt();
         context.findAncestorStateOfType<SplitScreenState>()?.reload();
       },
       child: Column(

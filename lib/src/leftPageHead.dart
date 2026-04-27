@@ -24,6 +24,7 @@ class Radius {
 class BlindRing {
   List<Radius> radiusList = [];
   List<Radius> answerList = [];
+  double rLcm = 0.0;
   BlindRing();
 
   void addRadius(int period, int length) {
@@ -56,12 +57,12 @@ class BlindRing {
     }
   }
 
-  double radiusLcm() {
+  void radiusLcm() {
     double lcmValue = 1;
     for (var radius in radiusList) {
       lcmValue = lcm(lcmValue, radius.period.round().toDouble());
     }
-    return lcmValue;
+    rLcm = lcmValue;
   }
 
   double answerLcm() {
@@ -125,9 +126,16 @@ class TrailComponent extends Component {
     clear();
     for (
       double t = 0;
-      t < ring.lcm(ring.radiusLcm(), ring.answerLcm()) + 0.1;
+      t < ring.lcm(ring.rLcm, ring.answerLcm()) + 0.1;
       t += 0.1
     ) {
+      addPoint(ring.getValue(t, 0) - ring.getAnswer(t, 0));
+    }
+  }
+
+  void aheadUseTime(BlindRing ring, double prevT, double nowT) {
+    clear();
+    for (double t = prevT; t < nowT + 0.1; t += 0.1) {
       addPoint(ring.getValue(t, 0) - ring.getAnswer(t, 0));
     }
   }
@@ -138,6 +146,7 @@ class GameScreen extends FlameGame {
   final int maxLength = 100;
   final int level;
   double t = 0;
+  double prevt = 0;
   int indexPointer = 0;
   BlindRing ring = BlindRing();
   TrailComponent trail = TrailComponent(customColor: Colors.white);
@@ -166,7 +175,7 @@ class GameScreen extends FlameGame {
     ),
     priority: -1,
   );
-  bool aheading = true;
+  bool aheading = false;
   bool clear = false;
 
   bool isLoad = false;
@@ -174,7 +183,13 @@ class GameScreen extends FlameGame {
   void reAhead() {
     if (aheading) {
       trail.ahead(ring);
+    } else {
+      trail.aheadUseTime(ring, prevt, t);
     }
+  }
+
+  void updatePrevt() {
+    prevt = t;
   }
 
   void showAnswers() {
@@ -206,6 +221,7 @@ class GameScreen extends FlameGame {
       trail.clear();
       world.add(pointer);
       world.add(origin);
+      updatePrevt();
       if (clear) {
         world.add(nodeTrails);
         for (var node in nodes) {
@@ -236,6 +252,7 @@ class GameScreen extends FlameGame {
     await super.onLoad();
 
     camera.viewfinder.anchor = Anchor.center;
+    world.add(pointer);
     world.add(trail);
     //debugMode = true;
     Random random = Random();
@@ -246,7 +263,7 @@ class GameScreen extends FlameGame {
       );
       ring.addAnswer(1, 0);
     }
-    trail.ahead(ring);
+    ring.radiusLcm();
     isLoad = true;
   }
 

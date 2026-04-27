@@ -46,7 +46,6 @@ class _AnswerControllerState extends State<AnswerController> {
                                     .answerList[widget.game.indexPointer]
                                     .length,
                               );
-                              widget.game.trail.clear();
                               widget.game.reAhead();
                               context
                                   .findAncestorStateOfType<SplitScreenState>()
@@ -82,7 +81,6 @@ class _AnswerControllerState extends State<AnswerController> {
                                     .period,
                                 value.round(),
                               );
-                              widget.game.trail.clear();
                               widget.game.reAhead();
                               context
                                   .findAncestorStateOfType<SplitScreenState>()
@@ -102,10 +100,22 @@ class _AnswerControllerState extends State<AnswerController> {
                           widget.game.modeSwitch();
                         });
                       },
-                      child: Text("曲線の一括表示"),
+                      child: Text("全体表示/答え合わせ"),
                     ),
                   ),
-                  Expanded(flex: 12, child: Container()),
+                  Expanded(
+                    flex: 1,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        setState(() {
+                          widget.game.updatePrevt();
+                          widget.game.reAhead();
+                        });
+                      },
+                      child: Text("追跡線のリセット"),
+                    ),
+                  ),
+                  Expanded(flex: 10, child: Container()),
                   Expanded(
                     flex: 5,
                     child: Container(
