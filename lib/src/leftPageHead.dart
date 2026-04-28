@@ -11,8 +11,8 @@ class Radius {
   int phase;
   Radius(this.period, this.length, this.phase);
 
-  Vector2 getValue(double time, double start) {
-    double t = (time - start) / period * pi * 2;
+  Vector2 getValue(double time) {
+    double t = (time - phase) / period * pi * 2;
     return Vector2(cos(t), sin(t)) * length.toDouble();
   }
 
@@ -40,7 +40,7 @@ class BlindRing {
   Vector2 getValue(double time) {
     Vector2 result = Vector2.zero();
     for (var radius in radiusList) {
-      result += radius.getValue(time, radius.phase.toDouble());
+      result += radius.getValue(time);
     }
     return result;
   }
@@ -48,7 +48,7 @@ class BlindRing {
   Vector2 getAnswer(double time) {
     Vector2 result = Vector2.zero();
     for (var radius in answerList) {
-      result += radius.getValue(time, radius.phase.toDouble());
+      result += radius.getValue(time);
     }
     return result;
   }
@@ -210,7 +210,7 @@ class GameScreen extends FlameGame {
           nodes.add(node);
           world.add(node);
         }
-        totalValue += ring.answerList[i].getValue(t, 0);
+        totalValue += ring.answerList[i].getValue(t);
         nodeTrails.addPoint(totalValue);
         nodes[ti].position = totalValue;
         ti++;

@@ -81,7 +81,6 @@ class AnswerBoxState extends State<AnswerBox> {
   Widget build(BuildContext context) {
     Vector2 value = widget.game.ring.answerList[widget.index].getValue(
       widget.game.t,
-      0,
     );
     return GestureDetector(
       onTap: () {
