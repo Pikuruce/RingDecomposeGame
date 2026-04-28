@@ -281,7 +281,7 @@ class GameScreen extends FlameGame {
       pointer.position = value;
       trail.addPoint(value);
     }
-    if (trail.length < 1e-1 && aheading && !clear) {
+    if (trail.length < 1e-1 * 2 && aheading && !clear) {
       clear = true;
       world.add(clearMessage);
       world.add(nodeTrails);
