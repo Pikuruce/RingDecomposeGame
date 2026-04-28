@@ -8,16 +8,18 @@ import 'package:flutter/material.dart';
 class Radius {
   int period;
   int length;
-  Radius(this.period, this.length);
+  int phase;
+  Radius(this.period, this.length, this.phase);
 
   Vector2 getValue(double time, double start) {
     double t = (time - start) / period * pi * 2;
     return Vector2(cos(t), sin(t)) * length.toDouble();
   }
 
-  void reDefine(int period, int length) {
+  void reDefine(int period, int length, int phase) {
     this.period = period;
     this.length = length;
+    this.phase = phase;
   }
 }
 
@@ -27,33 +29,33 @@ class BlindRing {
   double rLcm = 0.0;
   BlindRing();
 
-  void addRadius(int period, int length) {
-    radiusList.add(Radius(period, length));
+  void addRadius(int period, int length, int phase) {
+    radiusList.add(Radius(period, length, phase));
   }
 
-  void addAnswer(int period, int length) {
-    answerList.add(Radius(period, length));
+  void addAnswer(int period, int length, int phase) {
+    answerList.add(Radius(period, length, phase));
   }
 
-  Vector2 getValue(double time, double start) {
+  Vector2 getValue(double time) {
     Vector2 result = Vector2.zero();
     for (var radius in radiusList) {
-      result += radius.getValue(time, start);
+      result += radius.getValue(time, radius.phase.toDouble());
     }
     return result;
   }
 
-  Vector2 getAnswer(double time, double start) {
+  Vector2 getAnswer(double time) {
     Vector2 result = Vector2.zero();
     for (var radius in answerList) {
-      result += radius.getValue(time, start);
+      result += radius.getValue(time, radius.phase.toDouble());
     }
     return result;
   }
 
-  void reDefine(int index, int period, int length) {
+  void reDefine(int index, int period, int length, int phase) {
     if (index < answerList.length) {
-      answerList[index].reDefine(period, length);
+      answerList[index].reDefine(period, length, phase);
     }
   }
 
@@ -129,14 +131,14 @@ class TrailComponent extends Component {
       t < ring.lcm(ring.rLcm, ring.answerLcm()) + 0.1;
       t += 0.1
     ) {
-      addPoint(ring.getValue(t, 0) - ring.getAnswer(t, 0));
+      addPoint(ring.getValue(t) - ring.getAnswer(t));
     }
   }
 
   void aheadUseTime(BlindRing ring, double prevT, double nowT) {
     clear();
     for (double t = prevT; t < nowT + 0.1; t += 0.1) {
-      addPoint(ring.getValue(t, 0) - ring.getAnswer(t, 0));
+      addPoint(ring.getValue(t) - ring.getAnswer(t));
     }
   }
 }
@@ -257,11 +259,13 @@ class GameScreen extends FlameGame {
     //debugMode = true;
     Random random = Random();
     for (int i = 0; i < level; i++) {
+      int period = random.nextIntBetween(1, maxPeriod + 1);
       ring.addRadius(
-        random.nextIntBetween(1, maxPeriod + 1),
+        period,
         random.nextIntBetween(1, maxLength + 1),
+        random.nextInt(period),
       );
-      ring.addAnswer(1, 0);
+      ring.addAnswer(1, 0, 0);
     }
     ring.radiusLcm();
     isLoad = true;
@@ -273,7 +277,7 @@ class GameScreen extends FlameGame {
 
     t += dt;
     if (!clear && !aheading) {
-      Vector2 value = ring.getValue(t, 0) - ring.getAnswer(t, 0);
+      Vector2 value = ring.getValue(t) - ring.getAnswer(t);
       pointer.position = value;
       trail.addPoint(value);
     }
@@ -285,7 +289,7 @@ class GameScreen extends FlameGame {
 
     if (clear && !aheading) {
       showAnswers();
-      Vector2 value = ring.getAnswer(t, 0);
+      Vector2 value = ring.getAnswer(t);
       pointer.position = value;
       trail.addPoint(value);
     }

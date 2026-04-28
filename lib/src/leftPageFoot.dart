@@ -145,7 +145,7 @@ class AnswerBoxState extends State<AnswerBox> {
             ),
           ),
           Text(
-            "周期: ${widget.game.ring.answerList[widget.index].period}\n振幅: ${widget.game.ring.answerList[widget.index].length}",
+            "周期: ${widget.game.ring.answerList[widget.index].period}\n振幅: ${widget.game.ring.answerList[widget.index].length}\n位相: ${widget.game.ring.answerList[widget.index].phase}",
             style: TextStyle(color: Colors.white),
           ),
         ],

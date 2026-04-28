@@ -45,6 +45,11 @@ class _AnswerControllerState extends State<AnswerController> {
                                     .ring
                                     .answerList[widget.game.indexPointer]
                                     .length,
+                                widget
+                                    .game
+                                    .ring
+                                    .answerList[widget.game.indexPointer]
+                                    .phase,
                               );
                               widget.game.reAhead();
                               context
@@ -80,6 +85,11 @@ class _AnswerControllerState extends State<AnswerController> {
                                     .answerList[widget.game.indexPointer]
                                     .period,
                                 value.round(),
+                                widget
+                                    .game
+                                    .ring
+                                    .answerList[widget.game.indexPointer]
+                                    .phase,
                               );
                               widget.game.reAhead();
                               context
@@ -90,6 +100,46 @@ class _AnswerControllerState extends State<AnswerController> {
                         },
                       ),
                       itemName: "振幅",
+                    ),
+                  ),
+                  Expanded(
+                    flex: 3,
+                    child: GameSlider(
+                      slider: Slider(
+                        value: widget
+                            .game
+                            .ring
+                            .answerList[widget.game.indexPointer]
+                            .phase
+                            .toDouble(),
+                        min: 0,
+                        max: widget.game.maxPeriod.toDouble(),
+                        onChanged: (value) {
+                          if (!widget.game.clear) {
+                            setState(() {
+                              widget.game.ring.reDefine(
+                                widget.game.indexPointer,
+                                widget
+                                    .game
+                                    .ring
+                                    .answerList[widget.game.indexPointer]
+                                    .period,
+                                widget
+                                    .game
+                                    .ring
+                                    .answerList[widget.game.indexPointer]
+                                    .length,
+                                value.round(),
+                              );
+                              widget.game.reAhead();
+                              context
+                                  .findAncestorStateOfType<SplitScreenState>()
+                                  ?.reload();
+                            });
+                          }
+                        },
+                      ),
+                      itemName: "位相",
                     ),
                   ),
                   Expanded(
@@ -115,7 +165,7 @@ class _AnswerControllerState extends State<AnswerController> {
                       child: Text("追跡線のリセット"),
                     ),
                   ),
-                  Expanded(flex: 10, child: Container()),
+                  Expanded(flex: 5, child: Container()),
                   Expanded(
                     flex: 5,
                     child: Container(
