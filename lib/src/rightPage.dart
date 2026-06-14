@@ -129,7 +129,7 @@ class _AnswerControllerState extends State<AnswerController> {
                                     .ring
                                     .answerList[widget.game.indexPointer]
                                     .length,
-                                value.round(),
+                                (value * 10).round() / 10,
                               );
                               widget.game.reAhead();
                               context

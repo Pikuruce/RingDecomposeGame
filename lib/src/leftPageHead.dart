@@ -8,7 +8,7 @@ import 'package:flutter/material.dart';
 class Radius {
   int period;
   int length;
-  int phase;
+  double phase;
   Radius(this.period, this.length, this.phase);
 
   Vector2 getValue(double time) {
@@ -16,7 +16,7 @@ class Radius {
     return Vector2(cos(t), sin(t)) * length.toDouble();
   }
 
-  void reDefine(int period, int length, int phase) {
+  void reDefine(int period, int length, double phase) {
     this.period = period;
     this.length = length;
     this.phase = phase;
@@ -29,11 +29,11 @@ class BlindRing {
   double rLcm = 0.0;
   BlindRing();
 
-  void addRadius(int period, int length, int phase) {
+  void addRadius(int period, int length, double phase) {
     radiusList.add(Radius(period, length, phase));
   }
 
-  void addAnswer(int period, int length, int phase) {
+  void addAnswer(int period, int length, double phase) {
     answerList.add(Radius(period, length, phase));
   }
 
@@ -53,7 +53,7 @@ class BlindRing {
     return result;
   }
 
-  void reDefine(int index, int period, int length, int phase) {
+  void reDefine(int index, int period, int length, double phase) {
     if (index < answerList.length) {
       answerList[index].reDefine(period, length, phase);
     }
@@ -263,7 +263,7 @@ class GameScreen extends FlameGame {
       ring.addRadius(
         period,
         random.nextIntBetween(1, maxLength + 1),
-        random.nextInt(period),
+        (random.nextDoubleBetween(0, period.toDouble()) * 10).round() / 10,
       );
       ring.addAnswer(1, 0, 0);
     }
@@ -281,7 +281,7 @@ class GameScreen extends FlameGame {
       pointer.position = value;
       trail.addPoint(value);
     }
-    if (trail.length < 1e-1 && aheading && !clear) {
+    if (trail.length < 1e-1 * 2 && aheading && !clear) {
       clear = true;
       world.add(clearMessage);
       world.add(nodeTrails);
