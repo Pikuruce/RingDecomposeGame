@@ -1,4 +1,4 @@
-# blindring
+# RingDecomposeGame
 
 A new Flutter project.
 
