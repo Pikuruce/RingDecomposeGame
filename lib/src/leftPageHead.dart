@@ -4,7 +4,9 @@ import 'package:flame/components.dart';
 import 'package:flame/extensions.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
+import 'package:blindring/utils/logger.dart';
 
+// 円を表すためのクラス
 class Radius {
   int period;
   int length;
@@ -21,8 +23,17 @@ class Radius {
     this.length = length;
     this.phase = phase;
   }
+
+  (String, int) getInfo() {
+    return ("${(phase % period)}-$period", length);
+  }
+
+  String getInfoToString() {
+    return "period: $period, length: $length, phase: $phase";
+  }
 }
 
+// 円の組み合わせを表すためのクラス
 class BlindRing {
   List<Radius> radiusList = [];
   List<Radius> answerList = [];
@@ -85,8 +96,38 @@ class BlindRing {
     }
     return gcd(b, a % b);
   }
+
+  bool isClear() {
+    Map<String, int> ringInfo = {};
+    for (Radius el in radiusList) {
+      var info = el.getInfo();
+      ringInfo.update(
+        info.$1,
+        (existingValue) => existingValue + info.$2,
+        ifAbsent: () => info.$2,
+      );
+    }
+    for (Radius el in answerList) {
+      var info = el.getInfo();
+      ringInfo.update(
+        info.$1,
+        (existingValue) => existingValue - info.$2,
+        ifAbsent: () => info.$2,
+      );
+    }
+    int total = ringInfo.values.fold(0, (sum, value) => sum + value);
+    return total == 0;
+  }
+
+  void cheat() {
+    AppLogger logger = AppLogger();
+    for (var (i, el) in radiusList.indexed) {
+      logger.i("index: $i, information: ${el.getInfoToString()}");
+    }
+  }
 }
 
+// 円の軌道を描画するためのクラス
 class TrailComponent extends Component {
   final Path path = Path();
   Vector2? lastPoint;
@@ -143,6 +184,7 @@ class TrailComponent extends Component {
   }
 }
 
+// ゲームのロジックを管理するクラス
 class GameScreen extends FlameGame {
   late int maxPeriod = 64;
   final int maxLength = 100;
@@ -258,8 +300,13 @@ class GameScreen extends FlameGame {
     world.add(trail);
     //debugMode = true;
     Random random = Random();
+    List<int> selected = [];
     for (int i = 0; i < level; i++) {
-      int period = random.nextIntBetween(1, maxPeriod + 1);
+      int period = 0;
+      do {
+        period = random.nextIntBetween(1, maxPeriod + 1);
+      } while (selected.contains(period));
+      selected.add(period);
       ring.addRadius(
         period,
         random.nextIntBetween(1, maxLength + 1),
@@ -269,6 +316,7 @@ class GameScreen extends FlameGame {
     }
     ring.radiusLcm();
     isLoad = true;
+    ring.cheat();
   }
 
   @override
@@ -281,7 +329,7 @@ class GameScreen extends FlameGame {
       pointer.position = value;
       trail.addPoint(value);
     }
-    if (trail.length < 1e-1 * 2 && aheading && !clear) {
+    if (ring.isClear() && aheading && !clear) {
       clear = true;
       world.add(clearMessage);
       world.add(nodeTrails);
