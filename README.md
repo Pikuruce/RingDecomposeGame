@@ -1,16 +1,114 @@
 # RingDecomposeGame
 
-A new Flutter project.
+**RingDecomposeGame** は、複数の円運動を合成した軌道から、その円運動のパラメータを推測するパズルゲームです。
 
-## Getting Started
+プレイヤーは表示される軌道を観察し、それを構成している円運動の
 
-This project is a starting point for a Flutter application.
+- 周期 (Period)
+- 振幅 (Length)
+- 位相 (Phase)
 
-A few resources to get you started if this is your first Flutter project:
+を調整しながら、元の軌道を再現することを目指します。
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+---
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## ゲーム概要
+
+複数の円運動をベクトルとして加算すると、複雑な軌道が描かれます。
+
+ゲームでは
+
+- 左側に実際の軌道
+- 下部に現在作成中の答え
+- 右側に各円のパラメータ調整UI
+
+が表示されます。
+
+プレイヤーはスライダーを使って各円の
+
+- 周期
+- 振幅
+- 位相
+
+を変更し、元の軌道との差をなくしていきます。
+
+---
+
+## 遊び方
+
+1. 軌道を観察する
+2. 編集したい円を選択
+3. スライダーで
+   - 周期
+   - 振幅
+   - 位相
+   を変更する
+4. 軌跡を見ながら調整する
+5. 全て一致するとクリア
+
+---
+
+## 機能
+
+- 円運動のリアルタイム合成
+- 軌跡表示
+- 周期・振幅・位相の編集
+- 円ごとのプレビュー表示
+- レベル変更
+- 全体表示モード
+- 軌跡リセット
+
+---
+
+## 数学的背景
+
+各円は次の式で表現されています。
+
+```text
+x = A cos(2π(t - φ) / T)
+y = A sin(2π(t - φ) / T)
+```
+
+- T : 周期
+- A : 振幅
+- φ : 位相
+
+複数の円をベクトルとして加算し、
+
+```text
+P(t) = Σ Ri(t)
+```
+
+によって最終的な軌道を生成しています。
+
+---
+
+## 使用技術
+
+- Flutter
+- Flame Engine
+- Dart
+
+---
+
+## ディレクトリ構成
+
+```
+lib/
+├── main.dart                // アプリ全体
+├── src/
+│   ├── leftPageHead.dart        // ゲーム画面
+│   ├── leftPageFoot.dart        // 軌道プレビューUI
+│   └── rightPage.dart           // パラメータ編集UI
+├── utils/
+│   └── logger.dart              // AppLoggerの定義
+└── ...
+```
+
+---
+
+## 今後追加したい機能
+
+- スコア機能
+- タイムアタック
+- モバイル向けUI改善
