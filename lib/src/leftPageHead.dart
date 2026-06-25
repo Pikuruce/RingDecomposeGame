@@ -7,89 +7,104 @@ import 'package:flutter/material.dart';
 import 'package:blindring/utils/logger.dart';
 
 // 円を表すためのクラス
-class Radius {
+class Wave {
   int period;
   int length;
   double phase;
-  Radius(this.period, this.length, this.phase);
+  Wave(this.period, this.length, this.phase);
 
+  // その時間時点でのベクトル値を取得
   Vector2 getValue(double time) {
     double t = (time - phase) / period * pi * 2;
     return Vector2(cos(t), sin(t)) * length.toDouble();
   }
 
+  // 周期・振幅・位相の変更をする
   void reDefine(int period, int length, double phase) {
     this.period = period;
     this.length = length;
     this.phase = phase;
   }
 
+  // 答え合わせに使うために文字列で位相と周期・整数で振幅を返す
   (String, int) getInfo() {
     return ("${(phase % period)}-$period", length);
   }
 
+  // すべての情報を文字列で返す
   String getInfoToString() {
     return "period: $period, length: $length, phase: $phase";
   }
 }
 
-// 円の組み合わせを表すためのクラス
-class BlindRing {
-  List<Radius> radiusList = [];
-  List<Radius> answerList = [];
-  double rLcm = 0.0;
-  BlindRing();
+// 合成した波を表すためのクラス
+class WaveBox {
+  List<Wave> circleList = [];
+  List<Wave> answerList = [];
+  double wLcm = 1.0;
+  double awLcm = 1.0;
+  WaveBox();
 
-  void addRadius(int period, int length, double phase) {
-    radiusList.add(Radius(period, length, phase));
+  // 問題になる波を追加
+  void addWave(int period, int length, double phase) {
+    circleList.add(Wave(period, length, phase));
   }
 
-  void addAnswer(int period, int length, double phase) {
-    answerList.add(Radius(period, length, phase));
+  // 答えになる波を追加
+  void addAnswerWave(int period, int length, double phase) {
+    answerList.add(Wave(period, length, phase));
   }
 
+  // 問題の波のベクトル値の合成
   Vector2 getValue(double time) {
     Vector2 result = Vector2.zero();
-    for (var radius in radiusList) {
-      result += radius.getValue(time);
+    for (var circle in circleList) {
+      result += circle.getValue(time);
     }
     return result;
   }
 
-  Vector2 getAnswer(double time) {
+  // 答えの波のベクトル値の合成
+  Vector2 getAnswerValue(double time) {
     Vector2 result = Vector2.zero();
-    for (var radius in answerList) {
-      result += radius.getValue(time);
+    for (var circle in answerList) {
+      result += circle.getValue(time);
     }
     return result;
   }
 
+  // 指定したインデックスの波を編集
   void reDefine(int index, int period, int length, double phase) {
     if (index < answerList.length) {
       answerList[index].reDefine(period, length, phase);
+      answerLcm();
     }
   }
 
-  void radiusLcm() {
+  // 問題の波の周期の最小公倍数を取得
+  void waveLcm() {
     double lcmValue = 1;
-    for (var radius in radiusList) {
-      lcmValue = lcm(lcmValue, radius.period.round().toDouble());
+    for (var circle in circleList) {
+      lcmValue = lcm(lcmValue, circle.period.round().toDouble());
     }
-    rLcm = lcmValue;
+    wLcm = lcmValue;
   }
 
-  double answerLcm() {
+  // 答えの波の周期の最小公倍数を取得
+  void answerLcm() {
     double lcmValue = 1;
     for (var answer in answerList) {
       lcmValue = lcm(lcmValue, answer.period.round().toDouble());
     }
-    return lcmValue;
+    awLcm = lcmValue;
   }
 
+  // 最小公倍数を取得
   double lcm(double a, double b) {
     return a * b / gcd(a, b);
   }
 
+  // 最大公約数を取得
   double gcd(double a, double b) {
     if (b == 0) {
       return a;
@@ -97,9 +112,10 @@ class BlindRing {
     return gcd(b, a % b);
   }
 
+  // クリア判定
   bool isClear() {
     Map<String, int> ringInfo = {};
-    for (Radius el in radiusList) {
+    for (Wave el in circleList) {
       var info = el.getInfo();
       ringInfo.update(
         info.$1,
@@ -107,7 +123,7 @@ class BlindRing {
         ifAbsent: () => info.$2,
       );
     }
-    for (Radius el in answerList) {
+    for (Wave el in answerList) {
       var info = el.getInfo();
       ringInfo.update(
         info.$1,
@@ -119,9 +135,10 @@ class BlindRing {
     return total == 0;
   }
 
+  // loggerに答えを表示(デバッグ用)
   void cheat() {
     AppLogger logger = AppLogger();
-    for (var (i, el) in radiusList.indexed) {
+    for (var (i, el) in circleList.indexed) {
       logger.i("index: $i, information: ${el.getInfoToString()}");
     }
   }
@@ -131,7 +148,6 @@ class BlindRing {
 class TrailComponent extends Component {
   final Path path = Path();
   Vector2? lastPoint;
-  double length = 0.0;
   final Color customColor;
 
   TrailComponent({required this.customColor});
@@ -146,6 +162,7 @@ class TrailComponent extends Component {
     canvas.drawPath(path, paint);
   }
 
+  // 点を打って線を引く
   void addPoint(Vector2 point) {
     if (lastPoint == null) {
       path.moveTo(point.x, point.y);
@@ -153,33 +170,28 @@ class TrailComponent extends Component {
       path.moveTo(lastPoint!.x, lastPoint!.y);
       path.lineTo(point.x, point.y);
     }
-    if (lastPoint != null) {
-      length += (point - lastPoint!).length;
-    }
     lastPoint = point;
   }
 
+  // 点をリセット
   void clear() {
     path.reset();
-    length = 0.0;
     lastPoint = null;
   }
 
-  void ahead(BlindRing ring) {
+  // 合成した波が一周するまで線を引く
+  void ahead(WaveBox ring) {
     clear();
-    for (
-      double t = 0;
-      t < ring.lcm(ring.rLcm, ring.answerLcm()) + 0.1;
-      t += 0.1
-    ) {
-      addPoint(ring.getValue(t) - ring.getAnswer(t));
+    for (double t = 0; t < ring.lcm(ring.wLcm, ring.awLcm) + 0.1; t += 0.1) {
+      addPoint(ring.getValue(t) - ring.getAnswerValue(t));
     }
   }
 
-  void aheadUseTime(BlindRing ring, double prevT, double nowT) {
+  // 合成した波の一部の線を引く
+  void aheadUseTime(WaveBox ring, double prevT, double nowT) {
     clear();
     for (double t = prevT; t < nowT + 0.1; t += 0.1) {
-      addPoint(ring.getValue(t) - ring.getAnswer(t));
+      addPoint(ring.getValue(t) - ring.getAnswerValue(t));
     }
   }
 }
@@ -192,7 +204,7 @@ class GameScreen extends FlameGame {
   double t = 0;
   double prevt = 0;
   int indexPointer = 0;
-  BlindRing ring = BlindRing();
+  WaveBox ring = WaveBox();
   TrailComponent trail = TrailComponent(customColor: Colors.white);
   CircleComponent pointer = CircleComponent(
     radius: 5,
@@ -219,23 +231,26 @@ class GameScreen extends FlameGame {
     ),
     priority: -1,
   );
-  bool aheading = false;
+  bool summing = false;
   bool clear = false;
 
   bool isLoad = false;
 
+  // 合成した波の線を引く命令を出す
   void reAhead() {
-    if (aheading) {
+    if (summing) {
       trail.ahead(ring);
     } else {
       trail.aheadUseTime(ring, prevt, t);
     }
   }
 
+  // 線を引き始める時間を記憶する
   void updatePrevt() {
     prevt = t;
   }
 
+  // 合成した波の様子がわかるように分解した波をつないで再現
   void showAnswers() {
     nodeTrails.clear();
     nodeTrails.addPoint(Vector2.zero());
@@ -260,8 +275,9 @@ class GameScreen extends FlameGame {
     }
   }
 
+  // 合成した波の線を一括表示をするかどうかの切り替え
   void modeSwitch() {
-    if (aheading) {
+    if (summing) {
       trail.clear();
       world.add(pointer);
       world.add(origin);
@@ -284,9 +300,10 @@ class GameScreen extends FlameGame {
       }
     }
 
-    aheading = !aheading;
+    summing = !summing;
   }
 
+  // コンストラクタ
   GameScreen({required this.level}) {
     maxPeriod = (1 + (60 / level)).toInt();
   }
@@ -307,14 +324,14 @@ class GameScreen extends FlameGame {
         period = random.nextIntBetween(1, maxPeriod + 1);
       } while (selected.contains(period));
       selected.add(period);
-      ring.addRadius(
+      ring.addWave(
         period,
         random.nextIntBetween(1, maxLength + 1),
         (random.nextDoubleBetween(0, period.toDouble()) * 10).round() / 10,
       );
-      ring.addAnswer(1, 0, 0);
+      ring.addAnswerWave(1, 0, 0);
     }
-    ring.radiusLcm();
+    ring.waveLcm();
     isLoad = true;
     ring.cheat();
   }
@@ -324,20 +341,20 @@ class GameScreen extends FlameGame {
     super.update(dt);
 
     t += dt;
-    if (!clear && !aheading) {
-      Vector2 value = ring.getValue(t) - ring.getAnswer(t);
+    if (!clear && !summing) {
+      Vector2 value = ring.getValue(t) - ring.getAnswerValue(t);
       pointer.position = value;
       trail.addPoint(value);
     }
-    if (ring.isClear() && aheading && !clear) {
+    if (ring.isClear() && summing && !clear) {
       clear = true;
       world.add(clearMessage);
       world.add(nodeTrails);
     }
 
-    if (clear && !aheading) {
+    if (clear && !summing) {
       showAnswers();
-      Vector2 value = ring.getAnswer(t);
+      Vector2 value = ring.getAnswerValue(t);
       pointer.position = value;
       trail.addPoint(value);
     }

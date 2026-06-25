@@ -3,15 +3,15 @@ import 'package:blindring/src/leftPageHead.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 
-class AnswerUi extends StatefulWidget {
+class AnswerScreen extends StatefulWidget {
   final GameScreen game;
-  const AnswerUi({super.key, required this.game});
+  const AnswerScreen({super.key, required this.game});
 
   @override
-  State<AnswerUi> createState() => _AnswerUiState();
+  State<AnswerScreen> createState() => _AnswerUiState();
 }
 
-class _AnswerUiState extends State<AnswerUi>
+class _AnswerUiState extends State<AnswerScreen>
     with SingleTickerProviderStateMixin {
   late final AnimationController controller;
 
@@ -29,9 +29,11 @@ class _AnswerUiState extends State<AnswerUi>
 
   @override
   Widget build(BuildContext context) {
+    // gameのonLoadが終わってから開始するためのFutureBuilder
     return FutureBuilder(
       future: widget.game.loaded,
       builder: (context, snapshot) {
+        // 親ウィジェットから画面のサイズを取得するためのLayoutBuilder
         return LayoutBuilder(
           builder: (context, constraints) {
             return Container(
@@ -44,8 +46,9 @@ class _AnswerUiState extends State<AnswerUi>
                   scrollDirection: Axis.horizontal,
                   child: Center(
                     child: Row(
+                      // gameのリストの大きさに合わせてボックスを配置
                       children: List.generate(
-                        widget.game.ring.radiusList.length,
+                        widget.game.ring.circleList.length,
                         (index) => AnswerBox(game: widget.game, index: index),
                       ),
                     ),
@@ -85,7 +88,6 @@ class AnswerBoxState extends State<AnswerBox> {
     return GestureDetector(
       onTap: () {
         widget.game.indexPointer = widget.index;
-        //widget.game.updatePrevt();
         context.findAncestorStateOfType<SplitScreenState>()?.reload();
       },
       child: Column(

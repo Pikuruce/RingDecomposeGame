@@ -62,9 +62,11 @@ class SplitScreenState extends State<SplitScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // gameのonLoadが終わってから開始するためのFutureBuilder
     return FutureBuilder(
       future: game.loaded,
       builder: (context, snapchot) {
+        // 親ウィジェットから画面のサイズを取得するためのLayoutBuilder
         return LayoutBuilder(
           builder: (context, constraints) {
             return Scaffold(
@@ -72,7 +74,7 @@ class SplitScreenState extends State<SplitScreen> {
               backgroundColor: Colors.black,
               body: Row(
                 children: [
-                  // 左部：画面の2/3
+                  // 左部：画面の3/4
                   Expanded(
                     flex: 3,
                     child: Container(
@@ -80,7 +82,7 @@ class SplitScreenState extends State<SplitScreen> {
                       child: SplitGameScreen(game: game),
                     ),
                   ),
-                  // 右部：画面の1/3
+                  // 右部：画面の1/4
                   Expanded(
                     flex: 1,
                     child: Stack(
@@ -113,6 +115,7 @@ class SplitScreenState extends State<SplitScreen> {
   }
 }
 
+// SplitGameScreenウィジェットを定義
 class SplitGameScreen extends StatefulWidget {
   final GameScreen game;
   const SplitGameScreen({super.key, required this.game});
@@ -133,20 +136,12 @@ class _SplitGameScreenState extends State<SplitGameScreen> {
   }
 
   @override
-  void initState() {
-    super.initState();
-    // 初期のflex値を設定
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final constraints =
-          context.findRenderObject()!.constraints as BoxConstraints;
-      _updateNewFlexValues(constraints);
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
+    // 親ウィジェットから画面のサイズを取得するためにLayoutBuilderを使用
     return LayoutBuilder(
       builder: (context, constraints) {
+        _flexValues[0] = _borderY.toInt();
+        _flexValues[1] = (constraints.maxHeight - _borderY).toInt();
         return Stack(
           children: [
             // 画面を上下に分割するためのColumn
@@ -158,7 +153,7 @@ class _SplitGameScreenState extends State<SplitGameScreen> {
                 ),
                 Expanded(
                   flex: _flexValues[1],
-                  child: AnswerUi(game: widget.game),
+                  child: AnswerScreen(game: widget.game),
                 ),
               ],
             ),
