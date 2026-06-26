@@ -28,7 +28,7 @@ class Wave {
 
   // 答え合わせに使うために文字列で位相と周期・整数で振幅を返す
   (String, int) getInfo() {
-    return ("${(phase % period)}-$period", length);
+    return ("${((phase * 10) % period)}-$period", length);
   }
 
   // すべての情報を文字列で返す
